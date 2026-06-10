@@ -1,2 +1,8 @@
-# HPMA-Radioengineering
-If you found our code useful for your project and research, please give us a citation as a reward, and this will motivate us to further future developments and sharing efforts.
+# UAV-Assisted Hybrid Power-Frequency Multiple Access with Transmit Antenna Selection over Double Nakagami-$m$ Channels
+
+Sang-Quang Nguyen, Minh-Xuan Pham, The-Hung Dang, Hong-Nhu Nguyen, Chi-Cong Pham, Trong-Minh Hoang, and Lam-Thanh Tu
+
+# Abstract
+This paper investigates the performance of an unmanned aerial vehicle (UAV)-assisted hybrid power–frequency multiple access (HPMA) system with transmit antenna selection (TAS) over double Nakagami-$m$ fading channels. While existing literature has largely focused on conventional non-orthogonal multiple access (NOMA) or single-antenna setups, the novelty of this work lies in the joint integration of HPMA and TAS within a multi-antenna UAV network to combat the severe cascaded scattering effects modeled by the double Nakagami-$m$ distribution. By avoiding the complexity of successive interference cancellation, this joint framework offers a highly reliable and low-complexity transmission strategy. In the considered model, a multi-antenna UAV employs TAS to serve ground users over these cascaded fading channels. Closed-form expressions for the outage probability (OP) are derived by characterizing the statistical distribution of the equivalent channel gain. To provide further insights, asymptotic OP expressions are also obtained in the high-SNR regime, from which the diversity order of the considered system is determined. In addition, the throughput under delay-limited transmission is evaluated. Monte Carlo simulations are presented to validate the accuracy of the theoretical analysis, and numerical results demonstrate that the proposed HPMA scheme achieves better outage performance than the conventional NOMA scheme under the same system settings.
+
+## If you found our code useful for your project and research, please give us a citation as a reward, and this will motivate us to further future developments and sharing efforts.
