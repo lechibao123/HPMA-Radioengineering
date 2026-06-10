@@ -5,20 +5,20 @@ clear; clc; tic;
 alpha_1 = 0.45; alpha_2 = 0.45; alpha_12 = 0.1;
 
 % Power allocation
-delta_HPMA_1 = 0.5; delta_HPMA_2 = 1 - delta_HPMA_1;
-delta_NOMA_2 = 0.7; delta_NOMA_1 = 1 - delta_NOMA_2;
+delta_HPMA_1 = 0.4; delta_HPMA_2 = 1 - delta_HPMA_1;
+delta_NOMA_2 = 0.85; delta_NOMA_1 = 1 - delta_NOMA_2;
 
 % Number Antennas
-K = 3;
+K = 1;
 
 % Target rates bps/Hz
-R_1 = 1.5;
-R_2 = 1;
-gamma_th_1 = (2^R_1) - 1;
-gamma_th_2 = (2^R_2) - 1;
+
+SNR_dB = 0:0.15:3.9;
+R1_arr = SNR_dB;
+
 
 % Nakagami-m parameters
-m_1a = 1;
+m_1a = 2;
 m_2a = m_1a;
 
 m_1b = m_1a + 0.5;
@@ -44,15 +44,15 @@ d1 = sqrt(H^2 + r^2 + L^2 - 2*r*L*cosd(O));
 d2 = sqrt(H^2 + r^2 + L^2 + 2*r*L*cosd(O));
 
 %_
-SNR_dB = 0:2.5:40;
-rho_array = db2pow(SNR_dB);
+
+rho = db2pow(12);
 
 %_
 beta_1 = 1 / (alpha_1 + alpha_12);
 beta_2 = 1 / (alpha_2 + alpha_12);
 
 % Init
-leng_colum = length(rho_array);
+leng_colum = length(R1_arr);
 P_out_HPMA_1_sim = zeros(1,leng_colum); P_out_HPMA_2_sim = zeros(1,leng_colum);
 P_out_NOMA_1_sim = zeros(1,leng_colum); P_out_NOMA_2_sim = zeros(1,leng_colum);
 P_out_HPMA_1 = zeros(1,leng_colum); P_out_HPMA_2 = zeros(1,leng_colum);
@@ -74,9 +74,11 @@ H_2i = eta * d2^-zeta .* max(h_2i_a .* h_2i_b,[],1);
 
 
 %% Loop over SNR
-for idx = 1:length(rho_array)
-    rho = rho_array(idx);
-    
+for idx = 1:length(R1_arr)
+    R1 = R1_arr(idx);
+    R2 = R1;
+    gamma_th_1 = 2^R1 - 1;
+    gamma_th_2 = 2^R2 - 1;
 
     
     %% HPMA SINRs
@@ -93,10 +95,10 @@ for idx = 1:length(rho_array)
     gamma_NOMA_1_x1 = delta_NOMA_1 * rho .* H_1i;
     
     %% Simulated Outage
-    P_out_HPMA_1_sim(idx) = mean(gamma_HPMA_1 < gamma_th_1);
-    P_out_HPMA_2_sim(idx) = mean(gamma_HPMA_2 < gamma_th_2);
-    P_out_NOMA_1_sim(idx) = mean((gamma_NOMA_1_x2 < gamma_th_2) | (gamma_NOMA_1_x1 < gamma_th_1));
-    P_out_NOMA_2_sim(idx) = mean(gamma_NOMA_2 < gamma_th_2);
+    P_out_HPMA_1_sim(idx) = (1 -  mean(gamma_HPMA_1 < gamma_th_1)).*R1;
+    P_out_HPMA_2_sim(idx) = (1 - mean(gamma_HPMA_2 < gamma_th_2)).*R2;
+    P_out_NOMA_1_sim(idx) = (1 -  mean((gamma_NOMA_1_x2 < gamma_th_2) | (gamma_NOMA_1_x1 < gamma_th_1))).*R1;
+    P_out_NOMA_2_sim(idx) = (1 - mean(gamma_NOMA_2 < gamma_th_2)).*R2;
     
 
     %% Analytical HPMA
@@ -117,51 +119,44 @@ for idx = 1:length(rho_array)
     chi_1 = sqrt(pi) * 2^(1 - 2*m_1a) * (1/gamma(m_1a)/gamma(m_1b));
     chi_2 = sqrt(pi) * 2^(1 - 2*m_2a) * (1/gamma(m_2a)/gamma(m_2b));
 
-    P_out_HPMA_1(idx) = Ui_Analysis(Lambda1, K, m_1a, xi_1);
-    P_out_HPMA_2(idx) = Ui_Analysis(Lambda2, K, m_2a, xi_2);
-    P_out_NOMA_1(idx) = Ui_Analysis(Lambda_max, K, m_1a, xi_1);
-    P_out_NOMA_2(idx) = Ui_Analysis(Lambda3, K, m_2a, xi_2);
-
-    %% Asymptotic NOMA
+    if Lambda1 < 0
+        P_out_HPMA_1(idx) = P_out_HPMA_1_sim(idx);
+    else
+        P_out_HPMA_1(idx) = (1 - Ui_Analysis(Lambda1, K, m_1a, xi_1)).*R1;
+    end
     
-    P_out_HPMA_1_asym(idx) = ((chi_1/2/m_1a) * (4*Lambda1*xi_1)^m_1a)^K;
-    P_out_HPMA_2_asym(idx) = ((chi_2/2/m_2a) * (4*Lambda2*xi_2)^m_2a)^K;
-    P_out_NOMA_1_asym(idx) = ((chi_1/2/m_1a) * (4*Lambda_max*xi_1)^m_1a)^K;
-    P_out_NOMA_2_asym(idx) = ((chi_2/2/m_2a) * (4*Lambda3*xi_2)^m_2a)^K;
+    if Lambda2 < 0
+       P_out_HPMA_2(idx) = P_out_HPMA_2_sim(idx);
+    else
+       P_out_HPMA_2(idx) = (1 - Ui_Analysis(Lambda2, K, m_2a, xi_2)).*R2;
+    end
+        
+    
+    
+    P_out_NOMA_1(idx) = (1 - Ui_Analysis(Lambda_max, K, m_1a, xi_1)).*R1;
+%     P_out_NOMA_2(idx) = (1 - Ui_Analysis(Lambda3, K, m_2a, xi_2)).*R2;
 end
 
-idx_high = (length(SNR_dB)-3):length(SNR_dB);
-p1 = polyfit(log10(db2pow(SNR_dB(idx_high))), log10(P_out_HPMA_1_asym(idx_high)), 1);
-D_HPMA_1 = -p1(1)
-
-p2 = polyfit(log10(db2pow(SNR_dB(idx_high))), log10(P_out_HPMA_2_asym(idx_high)), 1);
-D_HPMA_2 = -p2(1)
 
 %% Plot %%
 blue1 = [0.00,0.45,0.74];  pink1 = [1.00,0.07,0.65];
 green1 = [0.47,0.67,0.19]; orrange = [0.85,0.33,0.10];
 
-semilogy(SNR_dB,P_out_HPMA_1,'-o','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color',green1); hold on
-semilogy(SNR_dB,P_out_HPMA_2,'-s','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color',pink1);
-semilogy(SNR_dB,P_out_NOMA_1,'-d','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color',blue1);
-semilogy(SNR_dB,P_out_NOMA_2,'-v','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color','m');
+plot(SNR_dB,P_out_HPMA_1,':o','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color',green1); hold on
+plot(SNR_dB,P_out_HPMA_2,':s','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color',pink1);
+plot(SNR_dB,P_out_NOMA_1_sim,':d','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color',blue1);
+plot(SNR_dB,P_out_NOMA_2_sim,':v','Linewidth',1,'MarkerFaceColor','w','MarkerSize',9,'Color','m');
 
-semilogy(SNR_dB,P_out_HPMA_1_sim,'k.','Linewidth',1,'MarkerSize',9);
-semilogy(SNR_dB,P_out_HPMA_1_asym,'k--','Linewidth',1,'MarkerSize',7);
-semilogy(SNR_dB,P_out_HPMA_2_sim,'k.','Linewidth',1,'MarkerSize',9);
-semilogy(SNR_dB,P_out_NOMA_1_sim,'k.','Linewidth',1,'MarkerSize',9);
-semilogy(SNR_dB,P_out_NOMA_2_sim,'k.','Linewidth',1,'MarkerSize',9);
-
-semilogy(SNR_dB,P_out_HPMA_2_asym,'k--','Linewidth',1,'MarkerSize',7);
-semilogy(SNR_dB,P_out_NOMA_1_asym,'k--','Linewidth',1,'MarkerSize',7);
-semilogy(SNR_dB,P_out_NOMA_2_asym,'k--','Linewidth',1,'MarkerSize',7);
+plot(SNR_dB,P_out_HPMA_1_sim,'k.','Linewidth',1,'MarkerSize',9);
+plot(SNR_dB,P_out_HPMA_2_sim,'k.','Linewidth',1,'MarkerSize',9);
+plot(SNR_dB,P_out_NOMA_1_sim,'k.','Linewidth',1,'MarkerSize',9);
+plot(SNR_dB,P_out_NOMA_2_sim,'k.','Linewidth',1,'MarkerSize',9);
 
 
-xlabel('$\rho$ [dB]','Interpreter','latex','fontsize',15);
-ylabel('Outage Probability','Interpreter','latex','fontsize',15);
-h = legend({'User 1, HPMA','User 2, HPMA','User 1, NOMA','User 2, NOMA','Simulation','High SNR'},'Interpreter','latex','Location','best');
-set(h,'interpreter','latex','fontsize',13);
+xlabel('$R_1 = R_2$ [bps/Hz]','Interpreter','latex','fontsize',15);
+ylabel('Throughput','Interpreter','latex','fontsize',15);
+h = legend({'User 1, HPMA','User 2, HPMA','User 1, NOMA','User 2, NOMA','Simulation'},'Interpreter','latex','Location','best');
+set(h,'interpreter','latex','fontsize',11);
 
-ylim([1e-6 1]);
+ylim([0 1.7]);
 toc;
-
