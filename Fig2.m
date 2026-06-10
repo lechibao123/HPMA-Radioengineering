@@ -159,7 +159,7 @@ semilogy(SNR_dB,P_out_NOMA_2_asym,'k--','Linewidth',1,'MarkerSize',7);
 
 xlabel('$\rho$ [dB]','Interpreter','latex','fontsize',15);
 ylabel('Outage Probability','Interpreter','latex','fontsize',15);
-h = legend({'User 1, HPMA','User 2, HPMA','User 1, NOMA','User 2, NOMA','Simulation','High SNR'},'Interpreter','latex','Location','best');
+h = legend({'User 1, HPMA','User 2, HPMA','User 1, NOMA','User 2, NOMA','Simulation','Asymptotic'},'Interpreter','latex','Location','best');
 set(h,'interpreter','latex','fontsize',13);
 
 ylim([1e-6 1]);
